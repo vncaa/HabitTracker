@@ -7,9 +7,11 @@ List<string> indexInDB = new List<string>();
 
 string connectionString = @"Data Source=(localdb)\MSSQLLocalDB";
 
-CreateDatabase(connectionString);
+CreateDatabase();
+LoadIds();
 UserMenu();
 
+#region Fce
 void UserMenu()
 {
     bool appRunning = true;
@@ -52,7 +54,7 @@ void ShowMenu()
 
 }
 
-void CreateDatabase(string connectionString)
+void CreateDatabase()
 {
     //quantity in string - issue with saving float with a comma insted of a dot into a db
     using (SqlConnection connection = new SqlConnection(connectionString))
@@ -71,6 +73,26 @@ void CreateDatabase(string connectionString)
         connection.Close();
 
         Console.WriteLine("DB created/loaded.\n");
+    }
+}
+
+void LoadIds()
+{
+    //loading ids into a list for later searching for existing and correct ids
+    using (SqlConnection connection = new SqlConnection(connectionString))
+    {
+        string queryString = "SELECT * FROM [walkingHabit]";
+        SqlCommand command = new SqlCommand(queryString, connection);
+        connection.Open();
+
+        using (SqlDataReader reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                indexInDB.Add($"{reader[0]}");
+            }
+
+        }
     }
 }
 
@@ -97,8 +119,6 @@ void ViewRecord()
                 while (reader.Read())
                 {
                     Console.WriteLine($"{reader[0]}: {reader[1]} - {reader[2]}km");
-                    //adding index to a list so later i can check for valid and available ids to choose from
-                    indexInDB.Add($"{reader[0]}");
                 }
                 Console.WriteLine();
             }
@@ -387,7 +407,7 @@ void UpdateRecordById()
 
 void DeleteRecord()
 {
-    Console.Clear();
+    DeleteRecordView();
     string id = ExistingId("delete");
 
     using (SqlConnection connection = new SqlConnection(connectionString))
@@ -404,6 +424,7 @@ void DeleteRecord()
     Console.WriteLine("ENTER - Main Menu");
     Console.ReadKey();
 }
+
 string ExistingId(string edit)
 {
     bool idFound = false;
@@ -424,7 +445,37 @@ string ExistingId(string edit)
             }
         }
         if(idFound==false)
-            Console.WriteLine("Invalid Id, please try again.");
+            Console.WriteLine("Invalid Id, please try again.\n");
     }
     return inputId;
 }
+
+void DeleteRecordView()
+{
+    Console.Clear();
+    using (SqlConnection connection = new SqlConnection(connectionString))
+    {
+        string queryString = "SELECT * FROM [walkingHabit]";
+        SqlCommand command = new SqlCommand(queryString, connection);
+        connection.Open();
+
+        using (SqlDataReader reader = command.ExecuteReader())
+        {
+            if (!reader.HasRows)
+            {
+                Console.WriteLine("No habit has been added.");
+            }
+            else
+            {
+                while (reader.Read())
+                {
+                    Console.WriteLine($"{reader[0]}: {reader[1]} - {reader[2]}km");
+                }
+                Console.WriteLine();
+            }
+
+        }
+        connection.Close();
+    }
+}
+#endregion
