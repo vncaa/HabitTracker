@@ -1,4 +1,5 @@
 ﻿using System.Data.SqlClient;
+using System.Reflection.Metadata.Ecma335;
 
 Console.Clear();
 
@@ -14,22 +15,22 @@ void UserMenu()
     {
         ShowMenu();
         Console.Write("> ");
-        int userInput = int.Parse(Console.ReadLine());
+        string userInput = Console.ReadLine();
         switch (userInput)
         {
-            case 0:
+            case "0":
                 appRunning = false;
                 break;
-            case 1:
+            case "1":
                 ViewRecord();
                 break;
-            case 2:
+            case "2":
                 InsertRecord();
                 break;
-            case 3:
+            case "3":
                 UpdateRecord();
                 break;
-            case 4:
+            case "4":
                 //DeleteRecord();
                 break;
             default:
@@ -44,11 +45,11 @@ void ShowMenu()
 {
     Console.Clear();
     Console.WriteLine("Welcome to WALKING HABIT tracker.\n");
-    Console.WriteLine("Press 0 to CLOSE APP");
-    Console.WriteLine("Press 1 to VIEW ALL RECORDS");
-    Console.WriteLine("Press 2 to INSERT RECORD");
-    Console.WriteLine("Press 3 to UPDATE RECORD");
-    Console.WriteLine("Press 4 to DELETE RECORD");
+    Console.WriteLine("Type 0 to CLOSE APP");
+    Console.WriteLine("Type 1 to VIEW ALL RECORDS");
+    Console.WriteLine("Type 2 to INSERT RECORD");
+    Console.WriteLine("Type 3 to UPDATE RECORD");
+    Console.WriteLine("Type 4 to DELETE RECORD");
     Console.WriteLine("----------------------------------");
 
 }
@@ -78,6 +79,8 @@ void CreateDatabase(string connectionString)
 void ViewRecord()
 {
     Console.Clear();
+    bool noRows = false;
+
     using (SqlConnection connection = new SqlConnection(connectionString))
     {
         string queryString = "SELECT * FROM [walkingHabit]";
@@ -87,7 +90,10 @@ void ViewRecord()
         using (SqlDataReader reader = command.ExecuteReader())
         {
             if (!reader.HasRows)
+            {
                 Console.WriteLine("No habit has been added.");
+                noRows = true;
+            }
             else
             {
                 while (reader.Read())
@@ -98,10 +104,88 @@ void ViewRecord()
 
         }
         connection.Close();
+        if (noRows == false)
+        {
+            FilterRecords();
+        }
+
 
         Console.WriteLine("\nEnter - MAIN MENU");
         Console.ReadKey();
     }
+}
+void FilterRecords()
+{
+    string filterById = "Id";
+    string filterByDate = "Date";
+    string filterByQuantity = "Quantity";
+
+    Console.WriteLine("\nFilter records by:");
+    Console.WriteLine("Type 1 - Id");
+    Console.WriteLine("Type 2 - Date");
+    Console.WriteLine("Type 3 - Quantity");
+    //Console.WriteLine("Type 0 - Main Menu");
+    Console.Write("> ");
+    string filterChoice = Console.ReadLine();
+
+    switch (filterChoice)
+    {
+        case "1":
+            FilterRecordsBy(filterById);
+            break;
+        case "2":
+            FilterRecordsBy(filterByDate);
+            break;
+        case "3":
+            FilterRecordsBy(filterByQuantity);
+            break;
+        default:
+            break;
+    }
+}
+
+void FilterRecordsBy(string filterChoice)
+{
+    //ascending/descending
+    string ascDesc = FilterAscendingDescending();
+
+    using(SqlConnection connection = new SqlConnection(connectionString))
+    {
+        string queryString = @$"SELECT * FROM [walkingHabit]
+                                ORDER BY [{filterChoice}] {ascDesc}";
+
+        SqlCommand command = new SqlCommand(queryString, connection);
+        connection.Open();
+
+        using (SqlDataReader reader = command.ExecuteReader())
+        {
+            while (reader.Read())
+            {
+                Console.WriteLine($"{reader[0]}: {reader[1]} - {reader[2]}km");
+            }
+        }
+    }
+}
+
+string FilterAscendingDescending()
+{
+    bool validInput = false;
+    string ascDesc = "";
+
+    Console.Write("\nFilter by ascending or descending order (asc/desc): ");
+    while(validInput == false)
+    {
+        string input = Console.ReadLine().ToUpper();
+        if (input == "ASC" || input == "DESC")
+        {
+            ascDesc = input;
+            validInput = true;
+        }
+        else
+            Console.WriteLine("Invalid input, please try again.");
+    }
+
+    return ascDesc;
 }
 
 void InsertRecord()
@@ -180,6 +264,7 @@ string GetDate()
         Console.Write("Enter the date (dd-mm-yyyy): ");
         date = Console.ReadLine();
     }
+    //if user intpus dot or slash instead of dash
     if (date.Contains("."))
         date = date.Replace('.', '-');
 
@@ -248,9 +333,11 @@ void UpdateRecord()
     using (SqlConnection connection = new SqlConnection(connectionString))
     {
         string queryString = @$"";
+
         SqlCommand command = new SqlCommand(queryString, connection);
         connection.Open();
         command.ExecuteNonQuery();
         connection.Close();
     }
 }
+
