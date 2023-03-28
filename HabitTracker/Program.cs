@@ -27,7 +27,7 @@ void UserMenu()
                 InsertRecord();
                 break;
             case 3:
-                //UpdateRecord();
+                UpdateRecord();
                 break;
             case 4:
                 //DeleteRecord();
@@ -92,7 +92,7 @@ void ViewRecord()
             {
                 while (reader.Read())
                 {
-                    Console.WriteLine($"{reader[1]}: {reader[2]} km");
+                    Console.WriteLine($"{reader[0]}: {reader[1]} - {reader[2]}km");
                 }
             }
 
@@ -107,8 +107,24 @@ void ViewRecord()
 void InsertRecord()
 {
     Console.Clear();
+    string date = "";
+    bool validDate = false;
 
-    string date = GetDate();
+    while (!validDate)
+    {
+        try
+        {
+            date = GetDate();
+            validDate = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            Console.WriteLine("Invalid date, please try again.");
+        }
+    }
+
+
     string quantity = GetQuantity();
 
     using (SqlConnection connection = new SqlConnection(connectionString))
@@ -126,11 +142,9 @@ void InsertRecord()
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.ToString());
-            Console.ReadKey();
+            Console.WriteLine(ex.Message);
         }
         connection.Close();
-        Console.ReadKey();
     }
 }
 
@@ -139,8 +153,8 @@ string GetQuantity()
     bool validInput;
     float quantity;
 
-    //converting to float to check for valid quanitity
-    Console.Write("Enter the quantity in km: ");
+    //converting to float to check for valid quantity
+    Console.Write("Enter the quantity in km (use a comma for a decimal point): ");
     validInput = float.TryParse(Console.ReadLine(), out quantity);
     while (validInput == false)
     {
@@ -151,9 +165,7 @@ string GetQuantity()
     //replacing comma with a dot
     string quantityString = quantity.ToString();
     if (quantityString.Contains(','))
-    {
         quantityString = quantityString.Replace(',', '.');
-    }
 
     return quantityString;
 }
@@ -168,6 +180,8 @@ string GetDate()
         Console.Write("Enter the date (dd-mm-yyyy): ");
         date = Console.ReadLine();
     }
+    if (date.Contains("."))
+        date = date.Replace('.', '-');
 
     return date;
 }
@@ -228,3 +242,15 @@ bool IsLeapYear(int year)
     return year % 4 == 0 && year % 100 != 0 || year % 400 == 0;
 }
 #endregion region
+
+void UpdateRecord()
+{
+    using (SqlConnection connection = new SqlConnection(connectionString))
+    {
+        string queryString = @$"";
+        SqlCommand command = new SqlCommand(queryString, connection);
+        connection.Open();
+        command.ExecuteNonQuery();
+        connection.Close();
+    }
+}
