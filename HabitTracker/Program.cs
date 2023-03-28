@@ -110,14 +110,10 @@ void ViewRecord()
         connection.Close();
         if (noRows == false)
         {
-            OrderRecordsMenu();
+            OrderRecordsMenu(); //+update fce
         }
         else
         {
-            foreach(string s in indexInDB)
-            {
-                Console.WriteLine(s);
-            }
             Console.WriteLine("\nEnter - MAIN MENU");
             Console.ReadKey();
         }  
@@ -159,6 +155,7 @@ void OrderRecordsMenu()
                 break;
             case "4":
                 UpdateRecordById();
+                orderRunning = false;
                 break;
             case "0":
                 orderRunning = false;
@@ -373,15 +370,16 @@ void UpdateRecordById()
     bool idFound = false;
     string inputId = "";
 
-    while(idFound == false)
+    while (idFound == false)
     {
         Console.WriteLine("\nType an ID of a record you wish to update:");
         Console.Write("> ");
         inputId = Console.ReadLine();
-        
-        foreach(string s in indexInDB)
+        Console.WriteLine();
+
+        foreach (string s in indexInDB)
         {
-            if(s == inputId)
+            if (s == inputId)
             {
                 idFound = true;
                 break;
@@ -389,19 +387,22 @@ void UpdateRecordById()
         }
     }
     string id = inputId;
+    string date = GetDate();
+    string quantity = GetQuantity();
 
-    
+
 
 
     using (SqlConnection connection = new SqlConnection(connectionString))
     {
-        string queryString = @$"";
+        string queryString = @$"UPDATE [walkingHabit]
+                                SET [Date] = '{date}', [Quantity] = '{quantity}'
+                                WHERE [Id] = {id}";
 
         SqlCommand command = new SqlCommand(queryString, connection);
         connection.Open();
-
+        command.ExecuteNonQuery();
         connection.Close();
+        Console.WriteLine("\nRecord successfully updated.\n");
     }
 }
-
-
