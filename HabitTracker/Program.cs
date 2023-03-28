@@ -1,7 +1,8 @@
 ﻿using System.Data.SqlClient;
-using System.Reflection.Metadata.Ecma335;
 
 Console.Clear();
+
+List<string> indexInDB = new List<string>();
 
 string connectionString = @"Data Source=(localdb)\MSSQLLocalDB";
 
@@ -27,10 +28,10 @@ void UserMenu()
             case "2":
                 InsertRecord();
                 break;
-            case "3":
+            /*case "3":
                 UpdateRecord();
-                break;
-            case "4":
+                break;*/
+            case "3":
                 //DeleteRecord();
                 break;
             default:
@@ -45,11 +46,11 @@ void ShowMenu()
 {
     Console.Clear();
     Console.WriteLine("Welcome to WALKING HABIT tracker.\n");
-    Console.WriteLine("Type 0 to CLOSE APP");
-    Console.WriteLine("Type 1 to VIEW ALL RECORDS");
+    Console.WriteLine("Type 1 to VIEW/UPDATE RECORDS");
     Console.WriteLine("Type 2 to INSERT RECORD");
-    Console.WriteLine("Type 3 to UPDATE RECORD");
-    Console.WriteLine("Type 4 to DELETE RECORD");
+    //Console.WriteLine("Type 3 to UPDATE RECORD");
+    Console.WriteLine("Type 3 to DELETE RECORD");
+    Console.WriteLine("Type 0 to CLOSE APP");
     Console.WriteLine("----------------------------------");
 
 }
@@ -99,60 +100,86 @@ void ViewRecord()
                 while (reader.Read())
                 {
                     Console.WriteLine($"{reader[0]}: {reader[1]} - {reader[2]}km");
+                    //adding index to a list so later i can check for valid and available ids to choose from
+                    indexInDB.Add($"{reader[0]}");
                 }
+                Console.WriteLine();
             }
 
         }
         connection.Close();
         if (noRows == false)
         {
-            FilterRecords();
+            OrderRecordsMenu();
         }
-
-
-        Console.WriteLine("\nEnter - MAIN MENU");
-        Console.ReadKey();
+        else
+        {
+            foreach(string s in indexInDB)
+            {
+                Console.WriteLine(s);
+            }
+            Console.WriteLine("\nEnter - MAIN MENU");
+            Console.ReadKey();
+        }  
     }
 }
-void FilterRecords()
+#region OrderingRecordsBy
+void OrderRecordsMenu()
 {
-    string filterById = "Id";
-    string filterByDate = "Date";
-    string filterByQuantity = "Quantity";
+    string orderById = "Id";
+    string orderByDate = "Date";
+    string orderByQuantity = "Quantity";
+    bool orderRunning = true;
 
-    Console.WriteLine("\nFilter records by:");
-    Console.WriteLine("Type 1 - Id");
-    Console.WriteLine("Type 2 - Date");
-    Console.WriteLine("Type 3 - Quantity");
-    //Console.WriteLine("Type 0 - Main Menu");
-    Console.Write("> ");
-    string filterChoice = Console.ReadLine();
-
-    switch (filterChoice)
+    while (orderRunning)
     {
-        case "1":
-            FilterRecordsBy(filterById);
-            break;
-        case "2":
-            FilterRecordsBy(filterByDate);
-            break;
-        case "3":
-            FilterRecordsBy(filterByQuantity);
-            break;
-        default:
-            break;
+        Console.WriteLine("Order records by:");
+        Console.WriteLine("Type 1 - Id");
+        Console.WriteLine("Type 2 - Date");
+        Console.WriteLine("Type 3 - Quantity");
+        Console.WriteLine("------------------------");
+        Console.WriteLine("Type 4 - Update a record");
+        Console.WriteLine("Type 0 - Main Menu");
+        Console.Write("> ");
+        string orderChoice = Console.ReadLine();
+
+        switch (orderChoice)
+        {
+            case "1":
+                OrderRecordsBy(orderById);
+                orderRunning = false;
+                break;
+            case "2":
+                OrderRecordsBy(orderByDate);
+                orderRunning = false;
+                break;
+            case "3":
+                OrderRecordsBy(orderByQuantity);
+                orderRunning = false;
+                break;
+            case "4":
+                UpdateRecordById();
+                break;
+            case "0":
+                orderRunning = false;
+                break;
+            default:
+                break;
+        }
     }
+    
 }
 
-void FilterRecordsBy(string filterChoice)
+void OrderRecordsBy(string orderChoice)
 {
     //ascending/descending
-    string ascDesc = FilterAscendingDescending();
+    string ascDesc = OrderAscendingDescending();
+    Console.Clear();
 
-    using(SqlConnection connection = new SqlConnection(connectionString))
+    using (SqlConnection connection = new SqlConnection(connectionString))
     {
         string queryString = @$"SELECT * FROM [walkingHabit]
-                                ORDER BY [{filterChoice}] {ascDesc}";
+                                ORDER BY [{orderChoice}] {ascDesc}";
 
         SqlCommand command = new SqlCommand(queryString, connection);
         connection.Open();
@@ -164,30 +191,46 @@ void FilterRecordsBy(string filterChoice)
                 Console.WriteLine($"{reader[0]}: {reader[1]} - {reader[2]}km");
             }
         }
+        connection.Close();
     }
+    Console.WriteLine("\nEnter - MAIN MENU");
+    Console.ReadKey();
 }
 
-string FilterAscendingDescending()
+string OrderAscendingDescending()
 {
     bool validInput = false;
     string ascDesc = "";
 
-    Console.Write("\nFilter by ascending or descending order (asc/desc): ");
-    while(validInput == false)
+    Console.WriteLine("\nOrder by ascending or descending order: ");
+    Console.WriteLine("Type 1 - Ascending Order");
+    Console.WriteLine("Type 2 - Descending Order");
+    Console.Write("> ");
+    string input = Console.ReadLine();
+    Console.WriteLine();
+
+    while (validInput == false)
     {
-        string input = Console.ReadLine().ToUpper();
-        if (input == "ASC" || input == "DESC")
+
+        switch (input)
         {
-            ascDesc = input;
-            validInput = true;
+            case "1":
+                ascDesc = "ASC";
+                validInput = true;
+                break;
+            case "2":
+                ascDesc = "DESC";
+                validInput = true;
+                break;
+            default:
+                Console.WriteLine("Invalid input, please try again.");
+                break;
         }
-        else
-            Console.WriteLine("Invalid input, please try again.");
     }
 
     return ascDesc;
 }
-
+#endregion
 void InsertRecord()
 {
     Console.Clear();
@@ -232,6 +275,7 @@ void InsertRecord()
     }
 }
 
+#region DateAndQuantity
 string GetQuantity()
 {
     bool validInput;
@@ -253,7 +297,6 @@ string GetQuantity()
 
     return quantityString;
 }
-
 string GetDate()
 {
     Console.Write("Enter the date (dd-mm-yyyy): ");
@@ -267,11 +310,11 @@ string GetDate()
     //if user intpus dot or slash instead of dash
     if (date.Contains("."))
         date = date.Replace('.', '-');
+    else if (date.Contains("/"))
+        date = date.Replace('/', '-');
 
     return date;
 }
-
-#region DateValidation
 bool IsValidDate(string date)
 {
     var successDay = int.TryParse(date.Substring(0, 2), out int day);
@@ -285,7 +328,6 @@ bool IsValidDate(string date)
 
     return IsValidDay(day, month, year);
 }
-
 bool IsValidDay(int day, int month, int year)
 {
     switch (month)
@@ -321,23 +363,45 @@ bool IsValidDay(int day, int month, int year)
 
     return true;
 }
-
 bool IsLeapYear(int year)
 {
     return year % 4 == 0 && year % 100 != 0 || year % 400 == 0;
 }
 #endregion region
-
-void UpdateRecord()
+void UpdateRecordById()
 {
+    bool idFound = false;
+    string inputId = "";
+
+    while(idFound == false)
+    {
+        Console.WriteLine("\nType an ID of a record you wish to update:");
+        Console.Write("> ");
+        inputId = Console.ReadLine();
+        
+        foreach(string s in indexInDB)
+        {
+            if(s == inputId)
+            {
+                idFound = true;
+                break;
+            }
+        }
+    }
+    string id = inputId;
+
+    
+
+
     using (SqlConnection connection = new SqlConnection(connectionString))
     {
         string queryString = @$"";
 
         SqlCommand command = new SqlCommand(queryString, connection);
         connection.Open();
-        command.ExecuteNonQuery();
+
         connection.Close();
     }
 }
+
 
