@@ -1,4 +1,5 @@
-﻿using System.Data.SqlClient;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Data.SqlClient;
 
 Console.Clear();
 
@@ -28,11 +29,8 @@ void UserMenu()
             case "2":
                 InsertRecord();
                 break;
-            /*case "3":
-                UpdateRecord();
-                break;*/
             case "3":
-                //DeleteRecord();
+                DeleteRecord();
                 break;
             default:
                 break;
@@ -48,7 +46,6 @@ void ShowMenu()
     Console.WriteLine("Welcome to WALKING HABIT tracker.\n");
     Console.WriteLine("Type 1 to VIEW/UPDATE RECORDS");
     Console.WriteLine("Type 2 to INSERT RECORD");
-    //Console.WriteLine("Type 3 to UPDATE RECORD");
     Console.WriteLine("Type 3 to DELETE RECORD");
     Console.WriteLine("Type 0 to CLOSE APP");
     Console.WriteLine("----------------------------------");
@@ -138,6 +135,7 @@ void OrderRecordsMenu()
         Console.WriteLine("Type 0 - Main Menu");
         Console.Write("> ");
         string orderChoice = Console.ReadLine();
+        Console.WriteLine();
 
         switch (orderChoice)
         {
@@ -260,7 +258,7 @@ void InsertRecord()
         try
         {
             command.ExecuteNonQuery();
-            Console.WriteLine("Record successfully added.");
+            Console.WriteLine("\nRecord successfully added.");
             Console.WriteLine("\nEnter - MAIN MENU");
             Console.ReadKey();
         }
@@ -367,31 +365,9 @@ bool IsLeapYear(int year)
 #endregion region
 void UpdateRecordById()
 {
-    bool idFound = false;
-    string inputId = "";
-
-    while (idFound == false)
-    {
-        Console.WriteLine("\nType an ID of a record you wish to update:");
-        Console.Write("> ");
-        inputId = Console.ReadLine();
-        Console.WriteLine();
-
-        foreach (string s in indexInDB)
-        {
-            if (s == inputId)
-            {
-                idFound = true;
-                break;
-            }
-        }
-    }
-    string id = inputId;
+    string id = ExistingId("update");
     string date = GetDate();
     string quantity = GetQuantity();
-
-
-
 
     using (SqlConnection connection = new SqlConnection(connectionString))
     {
@@ -403,6 +379,52 @@ void UpdateRecordById()
         connection.Open();
         command.ExecuteNonQuery();
         connection.Close();
-        Console.WriteLine("\nRecord successfully updated.\n");
     }
+    Console.WriteLine("\nRecord successfully updated.\n");
+    Console.WriteLine("ENTER - Main Menu");
+    Console.ReadKey();
+}
+
+void DeleteRecord()
+{
+    Console.Clear();
+    string id = ExistingId("delete");
+
+    using (SqlConnection connection = new SqlConnection(connectionString))
+    {
+        string queryString = @$"DELETE FROM [walkingHabit]
+                                WHERE [Id] = {id}";
+
+        SqlCommand command = new SqlCommand(queryString, connection);
+        connection.Open();
+        command.ExecuteNonQuery();
+        connection.Close();
+    }
+    Console.WriteLine("\nRecord successfully deleted.\n");
+    Console.WriteLine("ENTER - Main Menu");
+    Console.ReadKey();
+}
+string ExistingId(string edit)
+{
+    bool idFound = false;
+    string inputId = "";
+
+    while (idFound == false)
+    {
+        Console.WriteLine($"Type an ID of a record you wish to {edit}:");
+        Console.Write("> ");
+        inputId = Console.ReadLine();
+
+        foreach (string s in indexInDB)
+        {
+            if (s == inputId)
+            {
+                idFound = true;
+                break;
+            }
+        }
+        if(idFound==false)
+            Console.WriteLine("Invalid Id, please try again.");
+    }
+    return inputId;
 }
