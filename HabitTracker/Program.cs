@@ -318,7 +318,7 @@ string GetDate()
     string date = Console.ReadLine();
     while (!IsValidDate(date))
     {
-        Console.WriteLine("Invalid date, please try again.");
+        Console.WriteLine("Invalid date, please try again.\n");
         Console.Write("Enter the date (dd-mm-yyyy): ");
         date = Console.ReadLine();
     }
@@ -386,7 +386,23 @@ bool IsLeapYear(int year)
 void UpdateRecordById()
 {
     string id = ExistingId("update");
-    string date = GetDate();
+
+    string date = "";
+    bool validDate = false;
+
+    while (!validDate)
+    {
+        try
+        {
+            date = GetDate();
+            validDate = true;
+        }
+        catch
+        {
+            Console.WriteLine("Invalid date, please try again.\n");
+        }
+    }
+
     string quantity = GetQuantity();
 
     using (SqlConnection connection = new SqlConnection(connectionString))
