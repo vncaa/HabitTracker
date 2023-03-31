@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Data.SqlClient;
+using System.Runtime.CompilerServices;
 
 Console.Clear();
 
@@ -426,29 +427,33 @@ void DeleteRecord()
     DeleteRecordView();
     string id = ExistingId("delete");
 
-    using (SqlConnection connection = new SqlConnection(connectionString))
+    if (!String.IsNullOrEmpty(id))
     {
-        string queryString = @$"DELETE FROM [walkingHabit]
+        using (SqlConnection connection = new SqlConnection(connectionString))
+        {
+            string queryString = @$"DELETE FROM [walkingHabit]
                                 WHERE [Id] = {id}";
 
-        SqlCommand command = new SqlCommand(queryString, connection);
-        connection.Open();
-        command.ExecuteNonQuery();
-        connection.Close();
+            SqlCommand command = new SqlCommand(queryString, connection);
+            connection.Open();
+            command.ExecuteNonQuery();
+            connection.Close();
+        }
+        Console.WriteLine("\nRecord successfully deleted.\n");
+        Console.WriteLine("ENTER - Main Menu");
+        Console.ReadKey();
     }
-    Console.WriteLine("\nRecord successfully deleted.\n");
-    Console.WriteLine("ENTER - Main Menu");
-    Console.ReadKey();
 }
 
 string ExistingId(string edit)
 {
     bool idFound = false;
     string inputId = "";
+    bool mainMenu = false;
 
     while (idFound == false)
     {
-        Console.WriteLine($"Type an ID of a record you wish to {edit}:");
+        Console.WriteLine($"\nType an ID of a record you wish to {edit} (type Enter when no rows are loaded):");
         Console.Write("> ");
         inputId = Console.ReadLine();
 
@@ -460,14 +465,23 @@ string ExistingId(string edit)
                 break;
             }
         }
-        if(idFound==false)
+        if (idFound == false)
+        {
             Console.WriteLine("Invalid Id, please try again.\n");
+            Console.WriteLine("Return to Main Menu (yes/no): ");
+            Console.Write("> ");
+            string input = Console.ReadLine().ToLower();
+            if (input == "yes")
+            return "";
+        }    
     }
     return inputId;
 }
 
 void DeleteRecordView()
 {
+    bool noRows = false;
+
     Console.Clear();
     using (SqlConnection connection = new SqlConnection(connectionString))
     {
@@ -480,6 +494,7 @@ void DeleteRecordView()
             if (!reader.HasRows)
             {
                 Console.WriteLine("No habit has been added.");
+                noRows = true;
             }
             else
             {
