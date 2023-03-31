@@ -46,7 +46,7 @@ void UserMenu()
 void ShowMenu()
 {
     Console.Clear();
-    Console.WriteLine("Welcome to WALKING HABIT tracker.\n");
+    Console.WriteLine("Welcome to: WALKING HABIT tracker.\n");
     Console.WriteLine("Type 1 to VIEW/UPDATE RECORDS");
     Console.WriteLine("Type 2 to INSERT RECORD");
     Console.WriteLine("Type 3 to DELETE RECORD");
@@ -453,7 +453,7 @@ string ExistingId(string edit)
 
     while (idFound == false)
     {
-        Console.WriteLine($"\nType an ID of a record you wish to {edit} (type Enter when no rows are loaded):");
+        Console.WriteLine($"\nType an ID of a record you wish to {edit} (type Enter when no records are loaded):");
         Console.Write("> ");
         inputId = Console.ReadLine();
 
